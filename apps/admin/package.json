@@ -13,6 +13,7 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.6.5",
     "@lottiefiles/dotlottie-react": "^0.12.1",
     "@tanstack/react-query": "^5.63.0",
     "@tanstack/react-query-next-experimental": "^5.63.0",
