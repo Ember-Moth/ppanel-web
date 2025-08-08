@@ -7,7 +7,10 @@
     "lint": "next lint && tsc --noEmit",
     "locale": "lobe-i18n --with-md",
     "openapi": "openapi2ts",
-    "start": "next start"
+    "start": "next start",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^3.4.0",

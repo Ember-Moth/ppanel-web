@@ -1,0 +1,35 @@
+name: Deploy To Cloudflare Worker(user)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: 安装 Bun
+        run: curl -fsSL https://bun.com/install | bash
+
+      - name: 安装依赖 dependencies
+        run: |
+          export PATH="$HOME/.bun/bin:$PATH"
+          bun install
+
+      - name: 安装 wrangler
+        working-directory: ./apps/user
+        run: |
+          export PATH="$HOME/.bun/bin:$PATH"
+          bun add -d wrangler@latest
+
+      - name: Deploy to Cloudflare Workers
+        working-directory: ./apps/user
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          export PATH="$HOME/.bun/bin:$PATH"
+          bun run deploy
