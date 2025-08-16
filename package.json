@@ -64,5 +64,8 @@
   "packageManager": "bun@1.1.43",
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "caniuse-lite": "^1.0.30001735"
   }
 }
