@@ -53,8 +53,8 @@ export default function Footer() {
   const t = useTranslations('auth');
   return (
     <footer>
-      <Separator className='my-14' />
-      <div className='text-muted-foreground container mb-14 flex flex-wrap justify-between gap-4 text-sm'>
+        <Separator className='my-5' />
+        <div className='text-muted-foreground container mb-3 flex flex-wrap justify-between gap-4 text-sm'>
         <nav className='flex flex-wrap items-center gap-2'>
           {Links.filter((item) => item.href).map((item, index) => (
             <Fragment key={index}>

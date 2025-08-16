@@ -1,7 +1,4 @@
-import { GlobalMap } from '@/components/main/global-map';
 import { Hero } from '@/components/main/hero';
-import { ProductShowcase } from '@/components/main/product-showcase/index';
-import { Stats } from '@/components/main/stats';
 import { queryUserInfo } from '@/services/user/user';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -26,11 +23,8 @@ export default async function Home() {
   }
 
   return (
-    <main className='container space-y-16'>
+      <main className="container space-y-16 backdrop-blur-sm">
       <Hero />
-      <Stats />
-      <ProductShowcase />
-      <GlobalMap />
     </main>
   );
 }

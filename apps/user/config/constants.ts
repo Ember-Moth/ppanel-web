@@ -31,25 +31,3 @@ export const NEXT_PUBLIC_TWITTER_LINK =
   env('NEXT_PUBLIC_TWITTER_LINK') ?? process.env.NEXT_PUBLIC_TWITTER_LINK;
 export const NEXT_PUBLIC_INSTAGRAM_LINK =
   env('NEXT_PUBLIC_INSTAGRAM_LINK') ?? process.env.NEXT_PUBLIC_INSTAGRAM_LINK;
-
-export const NEXT_PUBLIC_HOME_USER_COUNT = (() => {
-  const value = env('NEXT_PUBLIC_HOME_USER_COUNT') ?? process.env.NEXT_PUBLIC_HOME_USER_COUNT;
-  const numberValue = Number(value);
-  if (isNaN(numberValue)) return 999;
-  return numberValue;
-})();
-
-export const NEXT_PUBLIC_HOME_SERVER_COUNT = (() => {
-  const value = env('NEXT_PUBLIC_HOME_SERVER_COUNT') ?? process.env.NEXT_PUBLIC_HOME_SERVER_COUNT;
-  const numberValue = Number(value);
-  if (isNaN(numberValue)) return 999;
-  return numberValue;
-})();
-
-export const NEXT_PUBLIC_HOME_LOCATION_COUNT = (() => {
-  const value =
-    env('NEXT_PUBLIC_HOME_LOCATION_COUNT') ?? process.env.NEXT_PUBLIC_HOME_LOCATION_COUNT;
-  const numberValue = Number(value);
-  if (isNaN(numberValue)) return 999;
-  return numberValue;
-})();
