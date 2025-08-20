@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
+    "build": "next build --turbopack",
     "dev": "next dev --turbopack",
     "lint": "next lint && tsc --noEmit",
     "locale": "lobe-i18n --with-md",
