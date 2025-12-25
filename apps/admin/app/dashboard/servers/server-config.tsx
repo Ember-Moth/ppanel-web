@@ -49,6 +49,7 @@ const dnsConfigSchema = z.object({
   proto: z.string(), // z.enum(['tcp', 'udp', 'tls', 'https', 'quic']),
   address: z.string(),
   domains: z.array(z.string()),
+  node_ids: z.array(z.string()).optional(),
 });
 
 const outboundConfigSchema = z.object({
@@ -59,6 +60,7 @@ const outboundConfigSchema = z.object({
   cipher: z.string().optional(),
   password: z.string().optional(),
   rules: z.array(z.string()).optional(),
+  node_ids: z.array(z.string()).optional(),
 });
 
 const nodeConfigSchema = z.object({
@@ -339,10 +341,19 @@ export default function ServerConfig() {
                                 className: 'col-span-2',
                                 placeholder: t('server_config.fields.dns_domains_placeholder'),
                               },
+                              {
+                                name: 'node_ids',
+                                type: 'textarea',
+                                className: 'col-span-2',
+                                placeholder: t('server_config.fields.node_ids_placeholder'),
+                              },
                             ]}
                             value={(field.value || []).map((item) => ({
                               ...item,
                               domains: Array.isArray(item.domains) ? item.domains.join('\n') : '',
+                              node_ids: Array.isArray(item.node_ids)
+                                ? item.node_ids.join('\n')
+                                : '',
                             }))}
                             onChange={(values) => {
                               const converted = values.map((item: any) => ({
@@ -350,8 +361,18 @@ export default function ServerConfig() {
                                 address: item.address,
                                 domains:
                                   typeof item.domains === 'string'
-                                    ? item.domains.split('\n').map((d: string) => d.trim())
+                                    ? item.domains
+                                        .split('\n')
+                                        .map((d: string) => d.trim())
+                                        .filter(Boolean)
                                     : item.domains || [],
+                                node_ids:
+                                  typeof item.node_ids === 'string'
+                                    ? item.node_ids
+                                        .split('\n')
+                                        .map((d: string) => d.trim())
+                                        .filter(Boolean)
+                                    : item.node_ids || [],
                               }));
                               field.onChange(converted);
                             }}
@@ -439,10 +460,19 @@ export default function ServerConfig() {
                                   className: 'col-span-2',
                                   placeholder: t('server_config.fields.outbound_rules_placeholder'),
                                 },
+                                {
+                                  name: 'node_ids',
+                                  type: 'textarea',
+                                  className: 'col-span-2',
+                                  placeholder: t('server_config.fields.node_ids_placeholder'),
+                                },
                               ]}
                               value={(field.value || []).map((item) => ({
                                 ...item,
                                 rules: Array.isArray(item.rules) ? item.rules.join('\n') : '',
+                                node_ids: Array.isArray(item.node_ids)
+                                  ? item.node_ids.join('\n')
+                                  : '',
                               }))}
                               onChange={(values) => {
                                 const converted = values.map((item: any) => ({
@@ -454,8 +484,18 @@ export default function ServerConfig() {
                                   password: item.password,
                                   rules:
                                     typeof item.rules === 'string'
-                                      ? item.rules.split('\n').map((r: string) => r.trim())
+                                      ? item.rules
+                                          .split('\n')
+                                          .map((r: string) => r.trim())
+                                          .filter(Boolean)
                                       : item.rules || [],
+                                  node_ids:
+                                    typeof item.node_ids === 'string'
+                                      ? item.node_ids
+                                          .split('\n')
+                                          .map((r: string) => r.trim())
+                                          .filter(Boolean)
+                                      : item.node_ids || [],
                                 }));
                                 field.onChange(converted);
                               }}
