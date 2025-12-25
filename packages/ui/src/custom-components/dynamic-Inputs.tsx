@@ -10,7 +10,7 @@ import { cn } from '@workspace/ui/lib/utils';
 import { CircleMinusIcon, CirclePlusIcon, XIcon } from 'lucide-react';
 import { useEffect, useState, KeyboardEvent } from 'react';
 
-// 1. 扩展 FieldConfig 类型，增加 'tags'
+// 1. 正确定义 FieldConfig 类型，确保包含 'tags'
 interface FieldConfig extends Omit<EnhancedInputProps, 'type'> {
   name: string;
   type: 'text' | 'number' | 'select' | 'time' | 'boolean' | 'textarea' | 'tags';
@@ -37,10 +37,10 @@ export function ObjectInput<T extends Record<string, any>>({
     setInternalState(value);
   }, [value]);
 
-  const updateField = (key: keyof T, fieldValue: any) => {
+  const updateField = (key: string, fieldValue: any) => {
     const updatedInternalState = { ...internalState, [key]: fieldValue };
     setInternalState(updatedInternalState);
-    onChange(updatedInternalState);
+    onChange(updatedInternalState as T);
   };
 
   const renderField = (field: FieldConfig) => {
@@ -62,7 +62,7 @@ export function ObjectInput<T extends Record<string, any>>({
         return (
           <div className='flex h-full items-center space-x-2'>
             <Switch
-              checked={internalState[field.name] as boolean}
+              checked={!!internalState[field.name]}
               onCheckedChange={(fieldValue) => updateField(field.name, fieldValue)}
             />
             {field.placeholder && <Label>{field.placeholder}</Label>}
@@ -80,7 +80,6 @@ export function ObjectInput<T extends Record<string, any>>({
             />
           </div>
         );
-      // 2. 实现 tags 渲染逻辑：回车生成元素
       case 'tags':
         const tags = Array.isArray(internalState[field.name]) 
           ? (internalState[field.name] as string[]) 
@@ -88,7 +87,7 @@ export function ObjectInput<T extends Record<string, any>>({
 
         const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
           if (e.key === 'Enter') {
-            e.preventDefault(); // 阻止触发表单提交
+            e.preventDefault(); 
             const input = e.currentTarget;
             const val = input.value.trim();
             if (val && !tags.includes(val)) {
@@ -133,11 +132,13 @@ export function ObjectInput<T extends Record<string, any>>({
           </div>
         );
       default:
+        // 排除掉 EnhancedInput 不识别的属性
+        const { options, visible, ...restField } = field;
         return (
           <EnhancedInput
-            value={internalState[field.name]}
+            value={internalState[field.name] ?? ''}
             onValueChange={(fieldValue) => updateField(field.name, fieldValue)}
-            {...field}
+            {...(restField as any)}
           />
         );
     }
@@ -175,13 +176,13 @@ export function ArrayInput<T extends Record<string, any>>({
 }: ArrayInputProps<T>) {
   const initializeDefaultItem = (): T =>
     fields.reduce((acc, field) => {
-      // 如果是 tags 类型，初始化为空数组而不是 undefined
-      acc[field.name as keyof T] = (field.type === 'tags' ? [] : undefined) as T[keyof T];
+      // 关键修复：如果是 tags 类型，初始化为空数组，避免渲染崩溃
+      acc[field.name as keyof T] = (field.type === 'tags' ? [] : (field.type === 'boolean' ? false : '')) as any;
       return acc;
     }, {} as T);
 
   const [displayItems, setDisplayItems] = useState<T[]>(() => {
-    return value.length > 0 ? value : [initializeDefaultItem()];
+    return value && value.length > 0 ? value : [initializeDefaultItem()];
   });
 
   const isItemModified = (item: T): boolean =>
@@ -208,8 +209,9 @@ export function ArrayInput<T extends Record<string, any>>({
 
   const deleteField = (index: number) => {
     const newDisplayItems = displayItems.filter((_, i) => i !== index);
-    setDisplayItems(newDisplayItems);
-    onChange(newDisplayItems.filter(isItemModified));
+    const finalItems = newDisplayItems.length > 0 ? newDisplayItems : [initializeDefaultItem()];
+    setDisplayItems(finalItems);
+    onChange(finalItems.filter(isItemModified));
   };
 
   useEffect(() => {
