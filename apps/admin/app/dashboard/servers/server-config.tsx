@@ -31,7 +31,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
 import { Textarea } from '@workspace/ui/components/textarea';
 import { ArrayInput } from '@workspace/ui/custom-components/dynamic-Inputs';
-import { EnhancedInput } from '@workspace/ui/custom-components/enhanced-input';
+import { EnhancedInput } from '@workspace/ui/components/input-enhanced'; // 确保路径正确
 import { Icon } from '@workspace/ui/custom-components/icon';
 import { unitConversion } from '@workspace/ui/utils';
 import { DicesIcon } from 'lucide-react';
@@ -43,7 +43,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { SS_CIPHERS } from './form-schema';
 
-// --- Zod Schema: 必须与后端 int64 数组匹配 ---
+// --- Zod Schema 定义 ---
 const dnsConfigSchema = z.object({
   proto: z.string(),
   address: z.string(),
@@ -121,7 +121,6 @@ export default function ServerConfig() {
   async function onSubmit(values: NodeConfigFormData) {
     setSaving(true);
     try {
-      // 这里的 values.dns[i].node_ids 现在是 [1] 而非 ["1"]
       await updateNodeConfig(values as API.NodeConfig);
       toast.success(t('server_config.saveSuccess'));
       await refetchCfg();
@@ -152,12 +151,12 @@ export default function ServerConfig() {
         </CardContent>
       </Card>
 
-      <SheetContent className='w-[720px] max-w-full md:max-w-screen-md'>
+      <SheetContent className='w-[720px] max-w-full md:max-w-screen-md flex flex-col'>
         <SheetHeader>
           <SheetTitle>{t('server_config.title')}</SheetTitle>
         </SheetHeader>
 
-        <ScrollArea className='-mx-6 h-[calc(100dvh-120px)] px-6'>
+        <ScrollArea className='flex-1 -mx-6 px-6 overflow-y-auto'>
           <Tabs defaultValue='basic' className='pt-4'>
             <TabsList className='grid w-full grid-cols-4'>
               <TabsTrigger value='basic'>{t('server_config.tabs.basic')}</TabsTrigger>
@@ -167,8 +166,8 @@ export default function ServerConfig() {
             </TabsList>
 
             <Form {...form}>
-              <form id='server-config-form' onSubmit={form.handleSubmit(onSubmit)} className='mt-4'>
-                <TabsContent value='basic' className='space-y-4'>
+              <form id='server-config-form' onSubmit={form.handleSubmit(onSubmit)} className='mt-4 space-y-6'>
+                <TabsContent value='basic' className='space-y-4 m-0'>
                   <FormField
                     control={form.control}
                     name='node_secret'
@@ -226,7 +225,7 @@ export default function ServerConfig() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value='dns' className='space-y-4'>
+                <TabsContent value='dns' className='space-y-4 m-0'>
                   <FormField
                     control={form.control}
                     name='dns'
@@ -235,7 +234,16 @@ export default function ServerConfig() {
                         <FormControl>
                           <ArrayInput
                             fields={[
-                              { name: 'proto', type: 'select', options: [{ label: 'UDP', value: 'udp' }, { label: 'TCP', value: 'tcp' }, { label: 'TLS', value: 'tls' }, { label: 'HTTPS', value: 'https' }] },
+                              { 
+                                name: 'proto', 
+                                type: 'select', 
+                                options: [
+                                  { label: 'UDP', value: 'udp' }, 
+                                  { label: 'TCP', value: 'tcp' }, 
+                                  { label: 'TLS', value: 'tls' }, 
+                                  { label: 'HTTPS', value: 'https' }
+                                ] 
+                              },
                               { name: 'address', type: 'text', placeholder: '8.8.8.8:53' },
                               { name: 'domains', type: 'textarea', className: 'col-span-2', placeholder: 'Domains (One per line)' },
                               { name: 'node_ids', type: 'tags', className: 'col-span-2', placeholder: 'Node ID' },
@@ -243,7 +251,6 @@ export default function ServerConfig() {
                             value={(field.value || []).map((item) => ({
                               ...item,
                               domains: Array.isArray(item.domains) ? item.domains.join('\n') : '',
-                              // 数字转字符串回显
                               node_ids: Array.isArray(item.node_ids) ? item.node_ids.map(String) : [],
                             }))}
                             onChange={(values) => {
@@ -251,8 +258,12 @@ export default function ServerConfig() {
                                 proto: item.proto,
                                 address: item.address,
                                 domains: typeof item.domains === 'string' ? item.domains.split('\n').filter(Boolean) : [],
-                                // 关键：字符串转数字 int64
-                                node_ids: Array.isArray(item.node_ids) ? item.node_ids.map(Number).filter(v => !isNaN(v)) : [],
+                                // 关键修复：类型谓词确保构建通过
+                                node_ids: Array.isArray(item.node_ids) 
+                                  ? item.node_ids
+                                      .map((v: any) => Number(v))
+                                      .filter((v): v is number => !isNaN(v)) 
+                                  : [],
                               }));
                               field.onChange(converted);
                             }}
@@ -263,7 +274,7 @@ export default function ServerConfig() {
                   />
                 </TabsContent>
 
-                <TabsContent value='outbound' className='space-y-4'>
+                <TabsContent value='outbound' className='space-y-4 m-0'>
                   <FormField
                     control={form.control}
                     name='outbound'
@@ -273,7 +284,16 @@ export default function ServerConfig() {
                           <ArrayInput
                             fields={[
                               { name: 'name', type: 'text', className: 'col-span-2' },
-                              { name: 'protocol', type: 'select', options: [{ label: 'Shadowsocks', value: 'shadowsocks' }, { label: 'VLESS', value: 'vless' }, { label: 'Trojan', value: 'trojan' }, { label: 'Direct', value: 'direct' }] },
+                              { 
+                                name: 'protocol', 
+                                type: 'select', 
+                                options: [
+                                  { label: 'Shadowsocks', value: 'shadowsocks' }, 
+                                  { label: 'VLESS', value: 'vless' }, 
+                                  { label: 'Trojan', value: 'trojan' }, 
+                                  { label: 'Direct', value: 'direct' }
+                                ] 
+                              },
                               { name: 'address', type: 'text' },
                               { name: 'port', type: 'number' },
                               { name: 'password', type: 'text' },
@@ -290,10 +310,34 @@ export default function ServerConfig() {
                                 ...item,
                                 port: Number(item.port),
                                 rules: typeof item.rules === 'string' ? item.rules.split('\n').filter(Boolean) : [],
-                                node_ids: Array.isArray(item.node_ids) ? item.node_ids.map(Number).filter(v => !isNaN(v)) : [],
+                                // 关键修复：类型谓词确保构建通过
+                                node_ids: Array.isArray(item.node_ids) 
+                                  ? item.node_ids
+                                      .map((v: any) => Number(v))
+                                      .filter((v): v is number => !isNaN(v)) 
+                                  : [],
                               }));
                               field.onChange(converted);
                             }}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+
+                <TabsContent value='block' className='space-y-4 m-0'>
+                  <FormField
+                    control={form.control}
+                    name='block'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Textarea
+                            placeholder={t('server_config.fields.block_rules_placeholder')}
+                            value={(field.value || []).join('\n')}
+                            onChange={(e) => field.onChange(e.target.value.split('\n').filter(Boolean))}
+                            rows={10}
                           />
                         </FormControl>
                       </FormItem>
@@ -305,7 +349,7 @@ export default function ServerConfig() {
           </Tabs>
         </ScrollArea>
 
-        <SheetFooter className="mt-4">
+        <SheetFooter className="pt-4 border-t">
           <Button disabled={saving} type='submit' form='server-config-form' className="w-full">
             {saving && <Icon icon='mdi:loading' className='mr-2 animate-spin' />}
             {t('actions.save')}
