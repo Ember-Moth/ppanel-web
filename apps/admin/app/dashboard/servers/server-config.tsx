@@ -8,7 +8,6 @@ import { Card, CardContent } from '@workspace/ui/components/card';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -35,7 +34,6 @@ import { Textarea } from '@workspace/ui/components/textarea';
 import { ArrayInput } from '@workspace/ui/custom-components/dynamic-Inputs';
 import { EnhancedInput } from '@workspace/ui/custom-components/enhanced-input';
 import { Icon } from '@workspace/ui/custom-components/icon';
-import TagInput from '@workspace/ui/custom-components/tag-input'; // 引入 TagInput 组件
 import { unitConversion } from '@workspace/ui/utils';
 import { DicesIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -46,7 +44,6 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { SS_CIPHERS } from './form-schema';
 
-// --- Zod Schema 定义 ---
 const dnsConfigSchema = z.object({
   proto: z.string(),
   address: z.string(),
@@ -83,7 +80,6 @@ export default function ServerConfig() {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // 获取配置数据
   const { data: cfgResp, refetch: refetchCfg } = useQuery({
     queryKey: ['getNodeConfig'],
     queryFn: async () => {
@@ -107,7 +103,6 @@ export default function ServerConfig() {
     },
   });
 
-  // 数据回显逻辑
   useEffect(() => {
     if (cfgResp) {
       form.reset({
@@ -174,8 +169,6 @@ export default function ServerConfig() {
 
             <Form {...form}>
               <form id='server-config-form' onSubmit={form.handleSubmit(onSubmit)} className='mt-4'>
-                
-                {/* 1. 基础配置 */}
                 <TabsContent value='basic' className='space-y-4'>
                   <FormField
                     control={form.control}
@@ -206,7 +199,6 @@ export default function ServerConfig() {
                       </FormItem>
                     )}
                   />
-                  {/* ... 其他基础字段 (node_pull_interval, node_push_interval, traffic_report_threshold) 保持原有逻辑 ... */}
                   <FormField
                     control={form.control}
                     name='node_pull_interval'
@@ -250,7 +242,6 @@ export default function ServerConfig() {
                   />
                 </TabsContent>
 
-                {/* 2. DNS 配置 (使用 TagInput) */}
                 <TabsContent value='dns' className='space-y-4'>
                   <FormField
                     control={form.control}
@@ -299,20 +290,15 @@ export default function ServerConfig() {
                               },
                               {
                                 name: 'node_ids',
+                                type: 'tags',
                                 className: 'col-span-2',
-                                render: (itemProps: any) => (
-                                  <TagInput
-                                    placeholder={t('server_config.fields.node_ids_placeholder')}
-                                    value={itemProps.value || []}
-                                    onChange={itemProps.onChange}
-                                  />
-                                ),
+                                placeholder: t('server_config.fields.node_ids_placeholder'),
                               },
                             ]}
                             value={(field.value || []).map((item) => ({
                               ...item,
                               domains: Array.isArray(item.domains) ? item.domains.join('\n') : '',
-                              node_ids: item.node_ids || [], // 直接传递数组
+                              node_ids: item.node_ids || [],
                             }))}
                             onChange={(values) => {
                               const converted = values.map((item: any) => ({
@@ -321,7 +307,7 @@ export default function ServerConfig() {
                                 domains: typeof item.domains === 'string'
                                   ? item.domains.split('\n').map((d: string) => d.trim()).filter(Boolean)
                                   : item.domains || [],
-                                node_ids: item.node_ids || [], // 保持数组格式
+                                node_ids: item.node_ids || [],
                               }));
                               field.onChange(converted);
                             }}
@@ -332,7 +318,6 @@ export default function ServerConfig() {
                   />
                 </TabsContent>
 
-                {/* 3. 出站配置 (使用 TagInput) */}
                 <TabsContent value='outbound' className='space-y-4'>
                   <FormField
                     control={form.control}
@@ -370,14 +355,9 @@ export default function ServerConfig() {
                               { name: 'rules', type: 'textarea', className: 'col-span-2' },
                               {
                                 name: 'node_ids',
+                                type: 'tags',
                                 className: 'col-span-2',
-                                render: (itemProps: any) => (
-                                  <TagInput
-                                    placeholder={t('server_config.fields.node_ids_placeholder')}
-                                    value={itemProps.value || []}
-                                    onChange={itemProps.onChange}
-                                  />
-                                ),
+                                placeholder: t('server_config.fields.node_ids_placeholder'),
                               },
                             ]}
                             value={(field.value || []).map((item) => ({
@@ -402,7 +382,6 @@ export default function ServerConfig() {
                   />
                 </TabsContent>
 
-                {/* 4. 阻断规则 */}
                 <TabsContent value='block' className='space-y-4'>
                   <FormField
                     control={form.control}
