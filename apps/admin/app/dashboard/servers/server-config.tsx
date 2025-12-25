@@ -292,7 +292,7 @@ export default function ServerConfig() {
                                 name: 'node_ids',
                                 type: 'tags',
                                 className: 'col-span-2',
-                                placeholder: t('server_config.fields.node_ids_placeholder'),
+                                placeholder: t('Node ID'),
                               },
                             ]}
                             value={(field.value || []).map((item) => ({
