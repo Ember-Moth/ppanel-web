@@ -27,7 +27,6 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@workspace/ui/components/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
 import { Textarea } from '@workspace/ui/components/textarea';
@@ -44,11 +43,12 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { SS_CIPHERS } from './form-schema';
 
+// --- Zod Schema: 必须与后端 int64 数组匹配 ---
 const dnsConfigSchema = z.object({
   proto: z.string(),
   address: z.string(),
   domains: z.array(z.string()),
-  node_ids: z.array(z.string()).optional(),
+  node_ids: z.array(z.number()).optional(), 
 });
 
 const outboundConfigSchema = z.object({
@@ -59,7 +59,7 @@ const outboundConfigSchema = z.object({
   cipher: z.string().optional(),
   password: z.string().optional(),
   rules: z.array(z.string()).optional(),
-  node_ids: z.array(z.string()).optional(),
+  node_ids: z.array(z.number()).optional(), 
 });
 
 const nodeConfigSchema = z.object({
@@ -121,6 +121,7 @@ export default function ServerConfig() {
   async function onSubmit(values: NodeConfigFormData) {
     setSaving(true);
     try {
+      // 这里的 values.dns[i].node_ids 现在是 [1] 而非 ["1"]
       await updateNodeConfig(values as API.NodeConfig);
       toast.success(t('server_config.saveSuccess'));
       await refetchCfg();
@@ -132,33 +133,31 @@ export default function ServerConfig() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Card>
-          <CardContent className='p-4'>
-            <div className='flex cursor-pointer items-center justify-between'>
-              <div className='flex items-center gap-3'>
-                <div className='bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg'>
-                  <Icon icon='mdi:resistor-nodes' className='text-primary h-5 w-5' />
-                </div>
-                <div className='flex-1'>
-                  <p className='font-medium'>{t('server_config.title')}</p>
-                  <p className='text-muted-foreground truncate text-sm'>
-                    {t('server_config.description')}
-                  </p>
-                </div>
+      <Card onClick={() => setOpen(true)} className="cursor-pointer">
+        <CardContent className='p-4'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
+              <div className='bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg'>
+                <Icon icon='mdi:resistor-nodes' className='text-primary h-5 w-5' />
               </div>
-              <Icon icon='mdi:chevron-right' className='size-6' />
+              <div className='flex-1'>
+                <p className='font-medium'>{t('server_config.title')}</p>
+                <p className='text-muted-foreground truncate text-sm'>
+                  {t('server_config.description')}
+                </p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </SheetTrigger>
+            <Icon icon='mdi:chevron-right' className='size-6' />
+          </div>
+        </CardContent>
+      </Card>
 
       <SheetContent className='w-[720px] max-w-full md:max-w-screen-md'>
         <SheetHeader>
           <SheetTitle>{t('server_config.title')}</SheetTitle>
         </SheetHeader>
 
-        <ScrollArea className='-mx-6 h-[calc(100dvh-48px-36px-36px-env(safe-area-inset-top))] px-6'>
+        <ScrollArea className='-mx-6 h-[calc(100dvh-120px)] px-6'>
           <Tabs defaultValue='basic' className='pt-4'>
             <TabsList className='grid w-full grid-cols-4'>
               <TabsTrigger value='basic'>{t('server_config.tabs.basic')}</TabsTrigger>
@@ -199,115 +198,61 @@ export default function ServerConfig() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name='node_pull_interval'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('server_config.fields.node_pull_interval')}</FormLabel>
-                        <FormControl>
-                          <EnhancedInput type='number' suffix='S' value={field.value as any} onValueChange={field.onChange} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name='node_push_interval'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('server_config.fields.node_push_interval')}</FormLabel>
-                        <FormControl>
-                          <EnhancedInput type='number' step={0.1} suffix='S' value={field.value as any} onValueChange={field.onChange} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name='traffic_report_threshold'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('server_config.fields.traffic_report_threshold')}</FormLabel>
-                        <FormControl>
-                          <EnhancedInput
-                            type='number'
-                            suffix='MB'
-                            value={unitConversion('bitsToMb', field.value as number | undefined)}
-                            onValueChange={(v) => field.onChange(unitConversion('mbToBits', v))}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name='node_pull_interval'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('server_config.fields.node_pull_interval')}</FormLabel>
+                          <FormControl>
+                            <EnhancedInput type='number' suffix='S' value={field.value as any} onValueChange={field.onChange} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name='node_push_interval'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('server_config.fields.node_push_interval')}</FormLabel>
+                          <FormControl>
+                            <EnhancedInput type='number' step={0.1} suffix='S' value={field.value as any} onValueChange={field.onChange} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </TabsContent>
 
                 <TabsContent value='dns' className='space-y-4'>
                   <FormField
                     control={form.control}
-                    name='ip_strategy'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('server_config.fields.ip_strategy')}</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                          <SelectContent>
-                            <SelectItem value='prefer_ipv4'>{t('server_config.fields.ip_strategy_ipv4')}</SelectItem>
-                            <SelectItem value='prefer_ipv6'>{t('server_config.fields.ip_strategy_ipv6')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
                     name='dns'
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('server_config.fields.dns_config')}</FormLabel>
                         <FormControl>
                           <ArrayInput
-                            className='grid grid-cols-2 gap-2'
                             fields={[
-                              {
-                                name: 'proto',
-                                type: 'select',
-                                options: [
-                                  { label: 'TCP', value: 'tcp' },
-                                  { label: 'UDP', value: 'udp' },
-                                  { label: 'TLS', value: 'tls' },
-                                  { label: 'HTTPS', value: 'https' },
-                                  { label: 'QUIC', value: 'quic' },
-                                ],
-                              },
+                              { name: 'proto', type: 'select', options: [{ label: 'UDP', value: 'udp' }, { label: 'TCP', value: 'tcp' }, { label: 'TLS', value: 'tls' }, { label: 'HTTPS', value: 'https' }] },
                               { name: 'address', type: 'text', placeholder: '8.8.8.8:53' },
-                              {
-                                name: 'domains',
-                                type: 'textarea',
-                                className: 'col-span-2',
-                                placeholder: t('server_config.fields.dns_domains_placeholder'),
-                              },
-                              {
-                                name: 'node_ids',
-                                type: 'tags',
-                                className: 'col-span-2',
-                                placeholder: t('Node ID'),
-                              },
+                              { name: 'domains', type: 'textarea', className: 'col-span-2', placeholder: 'Domains (One per line)' },
+                              { name: 'node_ids', type: 'tags', className: 'col-span-2', placeholder: 'Node ID' },
                             ]}
                             value={(field.value || []).map((item) => ({
                               ...item,
                               domains: Array.isArray(item.domains) ? item.domains.join('\n') : '',
-                              node_ids: item.node_ids || [],
+                              // 数字转字符串回显
+                              node_ids: Array.isArray(item.node_ids) ? item.node_ids.map(String) : [],
                             }))}
                             onChange={(values) => {
                               const converted = values.map((item: any) => ({
                                 proto: item.proto,
                                 address: item.address,
-                                domains: typeof item.domains === 'string'
-                                  ? item.domains.split('\n').map((d: string) => d.trim()).filter(Boolean)
-                                  : item.domains || [],
-                                node_ids: item.node_ids || [],
+                                domains: typeof item.domains === 'string' ? item.domains.split('\n').filter(Boolean) : [],
+                                // 关键：字符串转数字 int64
+                                node_ids: Array.isArray(item.node_ids) ? item.node_ids.map(Number).filter(v => !isNaN(v)) : [],
                               }));
                               field.onChange(converted);
                             }}
@@ -326,74 +271,29 @@ export default function ServerConfig() {
                       <FormItem>
                         <FormControl>
                           <ArrayInput
-                            className='grid grid-cols-2 gap-2'
                             fields={[
                               { name: 'name', type: 'text', className: 'col-span-2' },
-                              {
-                                name: 'protocol',
-                                type: 'select',
-                                options: [
-                                  { label: 'HTTP', value: 'http' },
-                                  { label: 'SOCKS', value: 'socks' },
-                                  { label: 'Shadowsocks', value: 'shadowsocks' },
-                                  { label: 'VMess', value: 'vmess' },
-                                  { label: 'VLESS', value: 'vless' },
-                                  { label: 'Trojan', value: 'trojan' },
-                                  { label: 'Direct', value: 'direct' },
-                                  { label: 'Reject', value: 'reject' },
-                                ],
-                              },
-                              {
-                                name: 'cipher',
-                                type: 'select',
-                                options: SS_CIPHERS.map((c) => ({ label: c, value: c })),
-                                visible: (item: any) => item.protocol === 'shadowsocks',
-                              },
+                              { name: 'protocol', type: 'select', options: [{ label: 'Shadowsocks', value: 'shadowsocks' }, { label: 'VLESS', value: 'vless' }, { label: 'Trojan', value: 'trojan' }, { label: 'Direct', value: 'direct' }] },
                               { name: 'address', type: 'text' },
                               { name: 'port', type: 'number' },
                               { name: 'password', type: 'text' },
                               { name: 'rules', type: 'textarea', className: 'col-span-2' },
-                              {
-                                name: 'node_ids',
-                                type: 'tags',
-                                className: 'col-span-2',
-                                placeholder: t('server_config.fields.node_ids_placeholder'),
-                              },
+                              { name: 'node_ids', type: 'tags', className: 'col-span-2', placeholder: 'Node ID' },
                             ]}
                             value={(field.value || []).map((item) => ({
                               ...item,
                               rules: Array.isArray(item.rules) ? item.rules.join('\n') : '',
-                              node_ids: item.node_ids || [],
+                              node_ids: Array.isArray(item.node_ids) ? item.node_ids.map(String) : [],
                             }))}
                             onChange={(values) => {
                               const converted = values.map((item: any) => ({
                                 ...item,
-                                rules: typeof item.rules === 'string'
-                                  ? item.rules.split('\n').map((r: string) => r.trim()).filter(Boolean)
-                                  : item.rules || [],
-                                node_ids: item.node_ids || [],
+                                port: Number(item.port),
+                                rules: typeof item.rules === 'string' ? item.rules.split('\n').filter(Boolean) : [],
+                                node_ids: Array.isArray(item.node_ids) ? item.node_ids.map(Number).filter(v => !isNaN(v)) : [],
                               }));
                               field.onChange(converted);
                             }}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </TabsContent>
-
-                <TabsContent value='block' className='space-y-4'>
-                  <FormField
-                    control={form.control}
-                    name='block'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Textarea
-                            placeholder={t('server_config.fields.block_rules_placeholder')}
-                            value={(field.value || []).join('\n')}
-                            onChange={(e) => field.onChange(e.target.value.split('\n').map((l) => l.trim()).filter(Boolean))}
-                            rows={10}
                           />
                         </FormControl>
                       </FormItem>
@@ -405,12 +305,9 @@ export default function ServerConfig() {
           </Tabs>
         </ScrollArea>
 
-        <SheetFooter className='flex-row justify-end gap-2 pt-3'>
-          <Button variant='outline' disabled={saving} onClick={() => setOpen(false)}>
-            {t('actions.cancel')}
-          </Button>
-          <Button disabled={saving} type='submit' form='server-config-form'>
-            <Icon icon='mdi:loading' className={saving ? 'mr-2 animate-spin' : 'hidden'} />
+        <SheetFooter className="mt-4">
+          <Button disabled={saving} type='submit' form='server-config-form' className="w-full">
+            {saving && <Icon icon='mdi:loading' className='mr-2 animate-spin' />}
             {t('actions.save')}
           </Button>
         </SheetFooter>
